@@ -179,3 +179,14 @@ def test_model_mismatch_detected(store, offline_settings):
     meta_path.write_text(json.dumps(meta))
     with pytest.raises(RagError, match="rebuild"):
         RagStore(offline_settings).retrieve("a1", "water")
+
+
+def test_neighbourhood_rejoins_a_passage_cut_by_a_chunk_boundary(store):
+    store.ingest("photo", [NOTES])
+    chunks = store.chunks("photo")
+    middle = chunks[len(chunks) // 2]
+    text = store.neighbourhood("photo", middle.chunk_id)
+    assert middle.text in text and len(text) > len(middle.text)
+    assert chunks[len(chunks) // 2 - 1].text in text and chunks[len(chunks) // 2 + 1].text in text
+    assert store.neighbourhood("photo", chunks[0].chunk_id).startswith(chunks[0].text)
+    assert store.neighbourhood("photo", "d9.p9.c9") == ""

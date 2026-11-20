@@ -257,6 +257,13 @@ For each pair of submissions in the same assignment and each question, compute `
 
 Thresholds are configurable and get calibrated on the gold set in Phase 7. Flags are **informational only**. Marks are never changed automatically.
 
+**Implemented (Phase 7), `services/duplicate.py`.**
+- `exact_file_check` runs in the precheck. It produces `EXACT_DUPLICATE` and reuses the earlier extraction.
+- `integrity_scan` runs in the post-check, before the Judge. It produces `TEXT_DUPLICATE` and `NEAR_DUPLICATE`/`SIMILAR`.
+- "Reference similarity" is the larger of: SBERT cosine to the model answer, SBERT cosine to the retrieved chunks, and lexical containment in the retrieved chunks plus their neighbours (D-11 addendum).
+- Settings: `INTEGRITY_MARGIN` (0.10) and `INTEGRITY_MIN_TOKENS` (15).
+- Flags are stored per side of each pair in `integrity_flags` (D-27).
+
 ---
 
 ## 6. Data Contracts (Pydantic v2, `sentineledu/schemas/`)
@@ -443,8 +450,8 @@ assessment_workflow = Workflow(
         Step(name="document_understanding", executor=run_document_agent), # wraps Agent 1 + fallback
         Step(name="extraction_gate", executor=extraction_gate),           # may stop the workflow
         Step(name="evaluation", executor=run_evaluation_agent),           # precompute + Agent 2 + validator
-        Step(name="judge", executor=run_judge_agent),                     # checks + Agent 3 + validator
-        Step(name="integrity_postcheck", executor=near_duplicate_scan),   # service fn
+        Step(name="integrity_postcheck", executor=near_duplicate_scan),   # service fn (before the Judge since Phase 7, D-27)
+        Step(name="judge", executor=run_judge_agent),                     # checks + integrity context + Agent 3 + validator
         Step(name="mark_pending_review", executor=mark_pending_review),
     ],
 )

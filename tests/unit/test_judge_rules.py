@@ -255,3 +255,14 @@ def test_recommendation_ignores_tampered_marks_and_uses_the_rubric_level():
     ev.questions[0].criteria[0].selected_level_id = "bogus"  # unknown level -> lowest level
     r = judge(agree_draft(), ev)
     assert r.verdicts["Q1"][0].recommended_marks == 0 and r.verdicts["Q1"][0].recommended_level_id == "none"
+
+
+def test_judge_repeating_a_context_flag_is_not_duplicated():
+    """Live run 2026-11-21: the model echoed the EXACT_DUPLICATE context flag back as its own flag."""
+    checks = [Flag(code="EXACT_DUPLICATE", severity="high", message="identical files to s9")]
+    d = agree_draft()
+    d.flags = [FlagDraft(code="EXACT_DUPLICATE", severity="high", message="same files as another student"),
+               FlagDraft(code="EXACT_DUPLICATE", severity="high", question_id="Q1", message="again, on Q1"),
+               FlagDraft(code="ODD_HANDWRITING", severity="info", message="two different hands")]
+    r = judge(d, checks=checks)
+    assert [f.code for f in r.flags] == ["EXACT_DUPLICATE", "ODD_HANDWRITING"]

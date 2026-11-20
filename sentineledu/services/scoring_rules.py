@@ -541,12 +541,16 @@ def validate_judge(
         else:
             feedback.append(_fallback_feedback(qe, q, attempted, answer))
 
+    seen = {(f.code, f.question_id, f.criterion_id) for f in flags}
     for fd in draft.flags:
         code = fd.code.strip().upper().replace(" ", "_")
         if not _CODE_RE.match(code):
             code = "JUDGE_NOTE"
         qid = fd.question_id if fd.question_id in known_q else None
         cid = fd.criterion_id if (qid and rubric.question(qid).criterion(fd.criterion_id or "")) else None
+        if (code, qid, cid) in seen or (code, None, None) in seen:
+            continue  # the model repeated a flag it was given as context
+        seen.add((code, qid, cid))
         flags.append(_flag(code, fd.severity, fd.message, qid, cid))
 
     recommended_total = sum(v.recommended_marks for vs in verdicts.values() for v in vs)

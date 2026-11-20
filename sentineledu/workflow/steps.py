@@ -19,8 +19,11 @@ from sentineledu.agents.evaluation_agent import EvaluationError, QuestionContext
 from sentineledu.agents.judge_agent import JudgeError, checks_only_report, judge
 from sentineledu.agents.runner import ResponseCache
 from sentineledu.config import Settings, get_settings
+from sentineledu.schemas.integrity import IntegrityFlag
+from sentineledu.schemas.judge import Flag
 from sentineledu.schemas.rubric import Rubric
 from sentineledu.schemas.submission import Submission, SubmissionStatus
+from sentineledu.services.duplicate import EXACT_DUPLICATE, exact_file_check, integrity_scan
 from sentineledu.services.extraction_review import extraction_gate
 from sentineledu.services.rag import RagStore
 from sentineledu.services.storage import NotFoundError, Storage
@@ -37,8 +40,13 @@ EVALUATION = "evaluation"
 JUDGE = "judge"
 INTEGRITY_POSTCHECK = "integrity_postcheck"
 MARK_PENDING_REVIEW = "mark_pending_review"
-STEP_ORDER = [INTEGRITY_PRECHECK, DOCUMENT_UNDERSTANDING, EXTRACTION_GATE, EVALUATION, JUDGE,
-              INTEGRITY_POSTCHECK, MARK_PENDING_REVIEW]
+# The duplicate scan runs before the Judge so the Judge sees its flags as context (TASKS 7.4, D-27).
+STEP_ORDER = [INTEGRITY_PRECHECK, DOCUMENT_UNDERSTANDING, EXTRACTION_GATE, EVALUATION, INTEGRITY_POSTCHECK,
+              JUDGE, MARK_PENDING_REVIEW]
+
+
+def as_judge_flag(f: IntegrityFlag) -> Flag:
+    return Flag(code=f.code, severity=f.severity, question_id=f.question_id, message=f.message)
 
 
 class StepFailed(RuntimeError):
@@ -104,10 +112,8 @@ class AssessmentSteps:
     # --- 1. integrity pre-check -----------------------------------------------------------------
 
     def integrity_precheck(self, submission_id: str) -> StepResult:
-        """Check the submission can run, and put a re-run back on the right starting status.
-
-        Exact-duplicate detection (EXACT_DUPLICATE / TEXT_DUPLICATE) is added here in Phase 7 (task 7.1).
-        """
+        """Check the submission can run, put a re-run back on the right starting status, and flag
+        byte-identical uploads (EXACT_DUPLICATE), reusing the earlier extraction so Gemini is not called again."""
         sub = self._submission(submission_id)
         if sub.status == S.FINALIZED:
             return StepResult("stopped", "Already finalised by a teacher; nothing to do.", stop=True)
@@ -119,8 +125,15 @@ class AssessmentSteps:
         elif sub.status in (S.EVALUATED, S.PENDING_TEACHER_REVIEW):
             self.storage.set_status(submission_id, S.EXTRACTED)
             notes.append(f"re-evaluating ({sub.status.value} -> EXTRACTED); earlier results are kept")
-        notes.append("duplicate checks are added in Phase 7")
-        return StepResult("ok", "; ".join(notes))
+        flags, reuse = exact_file_check(self.storage, sub)
+        self.storage.replace_integrity_flags(submission_id, {EXACT_DUPLICATE}, flags)
+        mine = [f for f in flags if f.submission_id == submission_id]
+        if mine:
+            notes.append(f"identical files to {', '.join(f.other_submission_id for f in mine)} (EXACT_DUPLICATE)")
+        if reuse is not None and self.storage.latest_extraction(submission_id) is None:
+            saved = self.storage.save_extraction(reuse)
+            notes.append(f"reused that submission's extraction as v{saved.version}")
+        return StepResult("ok", "; ".join(notes) or "no identical uploads", data={"exact_duplicates": len(mine)})
 
     # --- 2. document understanding (Agent 1) ----------------------------------------------------
 
@@ -197,15 +210,18 @@ class AssessmentSteps:
             raise StepFailed("No evaluation to review.")
         context = self._context(submission_id, extraction, rubric)
         status = "ok"
+        integrity = [as_judge_flag(f) for f in self.storage.integrity_flags(submission_id)]
         try:
             report = judge(extraction, rubric, evaluation, context=context, agent=self.deps.judge_agent,
-                           settings=self.settings, cache=self.deps.cache, use_cache=self.deps.use_cache)
+                           settings=self.settings, cache=self.deps.cache, use_cache=self.deps.use_cache,
+                           integrity=integrity)
         except JudgeError as e:
             if not self.deps.judge_fallback:
                 raise StepFailed(str(e)) from e  # status stays EVALUATED
             log.warning("Judge unavailable for %s, using the checks-only report: %s", submission_id, e)
             report = checks_only_report(extraction, rubric, evaluation, settings=self.settings,
-                                        reason=f"The Judge could not run ({str(e)[:200]}); no second opinion was taken.")
+                                        reason=f"The Judge could not run ({str(e)[:200]}); no second opinion was taken.",
+                                        integrity=integrity)
             status = "fallback"
         saved = self.storage.save_judge_report(report)
         changes = [f for f in saved.flags if f.code == "JUDGE_ADJUSTMENT"]
@@ -217,9 +233,12 @@ class AssessmentSteps:
     # --- 6. integrity post-check ----------------------------------------------------------------
 
     def integrity_postcheck(self, submission_id: str) -> StepResult:
-        """Near-duplicate scan against the cohort arrives in Phase 7 (task 7.2/7.4). Flags only, never marks."""
-        self._submission(submission_id)
-        return StepResult("skipped", "Near-duplicate scan is added in Phase 7.")
+        """Text-duplicate and near-duplicate scan against the rest of the assignment. Flags only, never marks."""
+        flags = integrity_scan(self.storage, submission_id, settings=self.settings, rag=self.deps.rag)
+        if not flags:
+            return StepResult("ok", "no duplicates found in the assignment", data={"flags": 0})
+        summary = ", ".join(f"{f.code}{'@' + f.question_id if f.question_id else ''} with {f.other_submission_id}" for f in flags)
+        return StepResult("ok", f"{len(flags)} integrity flag(s): {summary}", data={"flags": len(flags)})
 
     # --- 7. hand over to the teacher ------------------------------------------------------------
 

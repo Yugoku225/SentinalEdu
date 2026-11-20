@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     extraction_review_threshold: float = Field(0.6, ge=0, le=1)
     near_dup_threshold: float = Field(0.92, ge=0, le=1)
     similar_threshold: float = Field(0.85, ge=0, le=1)
+    integrity_margin: float = Field(0.10, ge=0, le=1)  # pair must be this much closer to each other than to the reference
+    integrity_min_tokens: int = Field(15, ge=1)  # shorter answers are not compared (they converge naturally)
     rag_top_k: int = Field(4, ge=1)
     storage_dir: Path = Path("storage")
 

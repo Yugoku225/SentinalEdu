@@ -23,7 +23,7 @@ def test_precheck_ok_and_missing_rubric(tmp_path):
     deps = make_deps(tmp_path)
     sid = new_submission(deps)
     r = AssessmentSteps(deps).integrity_precheck(sid)
-    assert r.status == "ok" and not r.stop and "Phase 7" in r.detail
+    assert r.status == "ok" and not r.stop and r.detail == "no identical uploads"
     deps2 = make_deps(tmp_path / "b", store_rubric=False)
     sid2 = new_submission(deps2)
     with pytest.raises(StepFailed, match="No rubric"):
@@ -150,10 +150,13 @@ def test_judge_failure_without_fallback_stops(tmp_path):
 
 # --- integrity_postcheck and mark_pending_review --------------------------------------------
 
-def test_postcheck_is_a_placeholder(tmp_path):
-    deps = make_deps(tmp_path)
-    r = AssessmentSteps(deps).integrity_postcheck(new_submission(deps))
-    assert r.status == "skipped" and "Phase 7" in r.detail
+def test_postcheck_with_no_cohort_finds_nothing(tmp_path):
+    deps = make_deps(tmp_path, doc=[doc_draft()])
+    sid = new_submission(deps)
+    steps = AssessmentSteps(deps)
+    steps.document_understanding(sid)
+    r = steps.integrity_postcheck(sid)
+    assert r.status == "ok" and r.data["flags"] == 0 and deps.storage.integrity_flags(sid) == []
 
 
 def test_mark_pending_review_needs_a_matching_judge_report(tmp_path):

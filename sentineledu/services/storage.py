@@ -1,6 +1,6 @@
 """SQLite + local-file persistence (ARCHITECTURE §8, DECISIONS D-12).
 
-Phase 3: submissions and versioned extractions. Phase 4: rubric versions and evaluation runs. Phase 5: judge reports. Phase 6: status guards, teacher decisions, audit log.
+Phase 3: submissions and versioned extractions. Phase 4: rubric versions and evaluation runs. Phase 5: judge reports. Phase 6: status guards, teacher decisions, audit log. Phase 7: integrity flags.
 Uploaded originals and earlier extraction versions are never overwritten.
 """
 import hashlib
@@ -16,6 +16,7 @@ from typing import Iterator, Sequence
 from sentineledu.config import Settings, get_settings
 from sentineledu.schemas.evaluation import EvaluationResult
 from sentineledu.schemas.extraction import ExtractedSubmission
+from sentineledu.schemas.integrity import IntegrityFlag
 from sentineledu.schemas.judge import JudgeReport
 from sentineledu.schemas.review import TeacherDecision
 from sentineledu.schemas.rubric import Rubric
@@ -100,6 +101,19 @@ CREATE TABLE IF NOT EXISTS audit_log (
     created_at     TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_audit_submission ON audit_log(submission_id, id);
+
+CREATE TABLE IF NOT EXISTS integrity_flags (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    assignment_id       TEXT NOT NULL,
+    submission_id       TEXT NOT NULL,
+    other_submission_id TEXT NOT NULL,
+    code                TEXT NOT NULL,
+    question_id         TEXT,
+    payload             TEXT NOT NULL,     -- IntegrityFlag JSON
+    created_at          TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_integrity_submission ON integrity_flags(submission_id);
+CREATE INDEX IF NOT EXISTS idx_integrity_other ON integrity_flags(other_submission_id);
 """
 
 
@@ -456,3 +470,42 @@ class Storage:
                 rows = c.execute("SELECT * FROM audit_log WHERE submission_id = ? AND run_id = ? ORDER BY id",
                                  (submission_id, run_id)).fetchall()
         return [dict(r) for r in rows]
+
+    # --- integrity flags (Phase 7) --------------------------------------------
+
+    def file_duplicates(self, submission: Submission) -> list[Submission]:
+        """Other submissions in the same assignment whose files are byte-identical (oldest first)."""
+        with self._conn() as c:
+            rows = c.execute("SELECT * FROM submissions WHERE assignment_id = ? AND file_sha256 = ? AND submission_id != ? "
+                             "ORDER BY created_at, rowid",
+                             (submission.assignment_id, submission.file_sha256, submission.submission_id)).fetchall()
+        return [Submission(**{**dict(r), "files": json.loads(r["files"])}) for r in rows]
+
+    def replace_integrity_flags(self, submission_id: str, codes: set[str], flags: Sequence[IntegrityFlag]) -> None:
+        """Delete this submission's flags with these codes (on either side of a pair) and store `flags`.
+
+        Re-running a check therefore never duplicates rows, and a pair that is no longer similar
+        (e.g. after a teacher correction) loses its flag on both sides.
+        """
+        codes = set(codes)
+        marks = ",".join("?" * len(codes))
+        with self._conn() as c:
+            c.execute(f"DELETE FROM integrity_flags WHERE code IN ({marks}) AND (submission_id = ? OR other_submission_id = ?)",
+                      (*codes, submission_id, submission_id))
+            for f in flags:
+                if f.code not in codes:
+                    raise ValueError(f"flag code {f.code} is not among the codes being replaced {sorted(codes)}")
+                c.execute("INSERT INTO integrity_flags (assignment_id, submission_id, other_submission_id, code, question_id, "
+                          "payload, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                          (f.assignment_id, f.submission_id, f.other_submission_id, f.code, f.question_id,
+                           f.model_dump_json(), f.created_at.isoformat()))
+
+    def integrity_flags(self, submission_id: str) -> list[IntegrityFlag]:
+        with self._conn() as c:
+            rows = c.execute("SELECT payload FROM integrity_flags WHERE submission_id = ? ORDER BY id", (submission_id,)).fetchall()
+        return [IntegrityFlag.model_validate_json(r["payload"]) for r in rows]
+
+    def assignment_integrity_flags(self, assignment_id: str) -> list[IntegrityFlag]:
+        with self._conn() as c:
+            rows = c.execute("SELECT payload FROM integrity_flags WHERE assignment_id = ? ORDER BY id", (assignment_id,)).fetchall()
+        return [IntegrityFlag.model_validate_json(r["payload"]) for r in rows]

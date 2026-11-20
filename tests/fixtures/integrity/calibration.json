@@ -1,0 +1,38 @@
+{
+  "description": "SYNTHETIC calibration class for the near-duplicate thresholds (SENTINELEDU_TASKS.md 7.3). Typed answers, 10 students, questions from data/rubrics/sample_rubric.json. Not a substitute for planted pairs in the real gold set (task 1.6).",
+  "synthetic": true,
+  "rubric": "data/rubrics/sample_rubric.json",
+  "reference": ["tests/fixtures/reference/photosynthesis_notes.txt"],
+  "students": {
+    "s01": {"Q1": "In my words photosynthesis is like a kitchen inside the leaf where sunshine is the stove and the plant cooks sugar out of air and water.",
+            "Q3": "Water is needed for photosynthesis to make glucose, and it carries minerals up from the roots to the leaves of the plant."},
+    "s02": {"Q1": "Photosynthesis is basically a kitchen in the leaf, the sunshine works as the stove and the plant cooks sugar from the air and water.",
+            "Q3": "Plants use water as a raw material in photosynthesis and it also keeps their cells turgid so the plant stands up straight."},
+    "s03": {"Q1": "Photosynthesis is the process in which green plants use energy from sunlight to turn carbon dioxide and water into glucose and release oxygen.",
+            "Q3": "Plants drink water mostly so their stems do not flop over like a wet noodle, and I think the water also travels up like a lift carrying food salts to every leaf."},
+    "s04": {"Q1": "Green plants make their own food by photosynthesis. Chlorophyll traps light and the plant combines carbon dioxide with water to form glucose, giving out oxygen.",
+            "Q3": "Plants take in water mainly so the stem does not flop over like a soggy noodle, and the water also goes up like an elevator carrying food salts to all the leaves."},
+    "s05": {"Q1": "Photosynthesis is the process by which green plants make their own food. Using the energy of sunlight, the plant combines carbon dioxide and water to produce glucose.",
+            "Q3": "Water is one of the raw materials of photosynthesis, so a plant cannot make food without it. Water also carries dissolved mineral salts such as nitrates from the soil up to the leaves."},
+    "s06": {"Q1": "Photosynthesis is the process by which green plants make their own food. Using the energy of sunlight the plant combines carbon dioxide and water to produce glucose, a simple sugar.",
+            "Q3": "Water is one of the raw materials of photosynthesis so a plant cannot make food without it. Water also carries dissolved mineral salts such as nitrate from the soil up to the leaves."},
+    "s07": {"Q1": "It is when leaves catch light with their green stuff and use that power to glue carbon dioxide and water together into sugar, and oxygen escapes.",
+            "Q3": "Without water a plant wilts because its cells lose their firmness, and it also cannot make food because water is used in photosynthesis."},
+    "s08": {"Q1": "It is when leafs catch light with there green stuff and use that power to glue carbon dioxide and water together into sugar and oxygen escapes.",
+            "Q3": "Water cools the plant when it evaporates from the leaves and it is used to make sugar during photosynthesis in the chloroplasts."},
+    "s09": {"Q1": "Plants produce glucose in their leaves during photosynthesis, using light energy, water from the roots and carbon dioxide from the air.",
+            "Q3": "When I forget my plant at home on Sundays it droops, so water must be what holds up the leaves, and it brings nutrients from the soil too."},
+    "s10": {"Q1": "During photosynthesis a plant uses sunlight, water and carbon dioxide to make food in the form of sugar, and oxygen is released into the air.",
+            "Q3": "My plant at home droops on Sundays when I forget it, so water must be what holds the leaves up, and it also brings nutrients from soil."}
+  },
+  "planted": [
+    {"a": "s01", "b": "s02", "question_id": "Q1", "kind": "paraphrase of an unusual analogy"},
+    {"a": "s07", "b": "s08", "question_id": "Q1", "kind": "near-verbatim copy with spelling changes"},
+    {"a": "s03", "b": "s04", "question_id": "Q3", "kind": "paraphrase of an unusual analogy"},
+    {"a": "s09", "b": "s10", "question_id": "Q3", "kind": "reordered personal anecdote"}
+  ],
+  "controls": [
+    {"a": "s05", "b": "s06", "question_id": "Q1", "kind": "both copied the textbook (must not be flagged)"},
+    {"a": "s05", "b": "s06", "question_id": "Q3", "kind": "both copied the textbook (must not be flagged)"}
+  ]
+}

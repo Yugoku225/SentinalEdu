@@ -11,7 +11,7 @@ feedback generated from the evaluation) for OFFLINE_MODE or when Gemini is down.
 """
 import logging
 from pathlib import Path
-from typing import Mapping
+from typing import Mapping, Sequence
 
 from sentineledu.agents.base import build_agent
 from sentineledu.agents.evaluation_agent import QuestionContext, build_context
@@ -49,7 +49,8 @@ def _levels_line(criterion) -> str:
 
 
 def build_judge_prompt(rubric: Rubric, extraction: ExtractedSubmission, evaluation: EvaluationResult,
-                       checks: list[Flag], context: Mapping[str, QuestionContext] | None = None) -> str:
+                       checks: list[Flag], context: Mapping[str, QuestionContext] | None = None,
+                       integrity: Sequence[Flag] = ()) -> str:
     attempted = [q.question_id for q in rubric.questions if is_attempted(extraction.answer_for(q.question_id))]
     lines = [f"Assignment: {rubric.title}",
              "Review the evaluator's grading of the questions below and write feedback for the student.",
@@ -57,6 +58,11 @@ def build_judge_prompt(rubric: Rubric, extraction: ExtractedSubmission, evaluati
     if checks:
         lines.append("Deterministic check flags (hints from rule-based checks, verify them yourself):")
         lines += [f"- [{f.severity}] {f.code}: {f.message}" for f in checks]
+        lines.append("")
+    if integrity:
+        lines.append("Academic-integrity flags (duplicate detection across the class). These are for the teacher only: "
+                     "they must NOT change any verdict, level or feedback. Grade the answer on its own content.")
+        lines += [f"- [{f.severity}] {f.code}: {f.message}" for f in integrity]
         lines.append("")
     for qid in attempted:
         q = rubric.question(qid)
@@ -96,10 +102,11 @@ def build_judge_prompt(rubric: Rubric, extraction: ExtractedSubmission, evaluati
 # --- entry points ---------------------------------------------------------------------------
 
 def checks_only_report(extraction: ExtractedSubmission, rubric: Rubric, evaluation: EvaluationResult, *,
-                       settings: Settings | None = None, reason: str = "") -> JudgeReport:
+                       settings: Settings | None = None, reason: str = "", integrity: Sequence[Flag] = ()) -> JudgeReport:
     """A report without the LLM: deterministic flags, the evaluator's levels kept, generated feedback."""
     settings = settings or get_settings()
     checks = run_checks(evaluation, extraction, rubric, low_confidence=settings.extraction_review_threshold)
+    checks += list(integrity)
     if reason:
         checks.append(Flag(code="JUDGE_NOT_RUN", severity="review", message=reason))
     return validate_judge(JudgeDraft(), evaluation, rubric, extraction, checks=checks,
@@ -118,13 +125,19 @@ def judge(
     settings: Settings | None = None,
     cache: ResponseCache | None = None,
     use_cache: bool = True,
+    integrity: Sequence[Flag] = (),
 ) -> JudgeReport:
-    """Second-review one graded submission. Raises JudgeError if Gemini is unavailable."""
+    """Second-review one graded submission. Raises JudgeError if Gemini is unavailable.
+
+    `integrity` flags (duplicate detection) are shown to the model as context and copied into the
+    report, but the prompt forbids them from affecting verdicts and the validator ignores them.
+    """
     settings = settings or get_settings()
     checks = run_checks(evaluation, extraction, rubric, low_confidence=settings.extraction_review_threshold)
+    integrity = list(integrity)
     if not any(is_attempted(extraction.answer_for(q.question_id)) for q in rubric.questions):
         log.info("Nothing to review for %s: every answer is blank or unreadable", extraction.submission_id)
-        return validate_judge(JudgeDraft(), evaluation, rubric, extraction, checks=checks,
+        return validate_judge(JudgeDraft(), evaluation, rubric, extraction, checks=checks + integrity,
                               prompt_version=PROMPT_VERSION, model_id=NO_LLM_MODEL_ID)
     if settings.offline_mode:
         raise JudgeError("OFFLINE_MODE is on: the judge needs Gemini. Use checks_only_report() for a rule-based review.")
@@ -134,13 +147,13 @@ def judge(
     if cache is None and use_cache:
         cache = ResponseCache(settings.cache_dir)
     agent = agent or build_judge_agent(settings)
-    prompt = build_judge_prompt(rubric, extraction, evaluation, checks, context)
+    prompt = build_judge_prompt(rubric, extraction, evaluation, checks, context, integrity)
     try:
         result = run_structured(agent, prompt, JudgeDraft, prompt_version=PROMPT_VERSION, cache=cache)
     except LLMCallError as e:
         raise JudgeError(f"Gemini could not review submission {extraction.submission_id}: {e}") from e
 
-    report = validate_judge(result.output, evaluation, rubric, extraction, checks=checks,
+    report = validate_judge(result.output, evaluation, rubric, extraction, checks=checks + integrity,
                             prompt_version=PROMPT_VERSION, model_id=result.model_id)
     changed = [f.message for f in report.flags if f.code == "JUDGE_ADJUSTMENT"]
     log.info("[judge-agent] %s: recommends %g/%g (evaluator %g) by %s%s", extraction.submission_id,

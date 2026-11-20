@@ -142,16 +142,17 @@ Mark a task `[x]` only after its AC has been verified. A phase is complete when 
 
 ## Phase 7 — Integrity (≈ 2 days)
 
-- [ ] **7.1 Exact duplicates**: file SHA-256 and normalised-text SHA-256 checks within an assignment. Produce `EXACT_DUPLICATE` (file) and `TEXT_DUPLICATE` flags. Reuse the cached extraction on a file match.
+- [x] **7.1 Exact duplicates**: file SHA-256 and normalised-text SHA-256 checks within an assignment. Produce `EXACT_DUPLICATE` (file) and `TEXT_DUPLICATE` flags. Reuse the cached extraction on a file match.
   Deps: 3.1, 6.2 · AC: uploading the same file twice gives a flag and no second Gemini call.
-- [ ] **7.2 Near-duplicate scan**: per-question pairwise SBERT across the cohort, using the margin rule in ARCHITECTURE §5.1 and skipping short answers.
+- [x] **7.2 Near-duplicate scan**: per-question pairwise SBERT across the cohort, using the margin rule in ARCHITECTURE §5.1 and skipping short answers.
   Deps: 4.1 · AC: unit tests with synthetic answers (paraphrase → flagged; both copied from the reference → not flagged; short → skipped).
 - [ ] **7.3 Calibration**: create 3–4 planted near-duplicate pairs in the gold set and tune thresholds. Record precision/recall.
   Deps: 7.2, 1.6 · AC: thresholds are written to `.env.example` and DECISIONS D-11. All planted pairs are detected and there are ≤ 1 false positive.
-- [ ] **7.4 Workflow wiring**: pre-check and post-check steps write `IntegrityFlag` rows. Flags are shown to the Judge as context but never change marks.
+- [x] **7.4 Workflow wiring**: pre-check and post-check steps write `IntegrityFlag` rows. Flags are shown to the Judge as context but never change marks.
   Deps: 7.1, 7.2, 6.2 · AC: integration test. Marks are identical with and without a duplicate present.
 
 **Phase 7 Exit Gate (M6):** planted duplicates are flagged. No automatic penalties.
+> **Status 2026-11-21:** met on the *synthetic* calibration class: 4/4 planted pairs flagged, 0 false positives, both "copied the textbook" controls not flagged (`docs/results.md`). Marks are identical with and without a duplicate in the class (integration test, and a live re-upload: same 7/7). **Still open: task 7.3 on real data.** It needs 3–4 planted pairs in the gold set (task 1.6). The synthetic class could not separate threshold choices: all 80 grid settings passed.
 
 ---
 

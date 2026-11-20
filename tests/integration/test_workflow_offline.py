@@ -19,7 +19,7 @@ def test_happy_path_reaches_pending_teacher_review(tmp_path):
     run = assess_files(RUBRIC.assignment_id, [PAGE], deps, student_ref="S01")
     assert run.status == S.PENDING_TEACHER_REVIEW and run.stopped_at is None
     assert [s.step for s in run.steps] == STEP_ORDER
-    assert [s.status for s in run.steps] == ["ok", "ok", "ok", "ok", "ok", "skipped", "ok"]
+    assert [s.status for s in run.steps] == ["ok"] * 7
     assert run.evaluation_total == 7 and run.recommended_total == 7 and run.max_total == 7
     assert run.extraction_version == 1 and run.evaluation_id
     assert [len(a.calls) for a in (deps.document_agent, deps.evaluation_agent, deps.judge_agent)] == [1, 1, 1]
@@ -96,7 +96,7 @@ def test_judge_outage_still_reaches_review_with_flag(tmp_path):
     deps = make_deps(tmp_path, doc=[doc_draft()], ev=[eval_draft()], jd=[ProviderError("400 bad request")])
     run = assess_files(RUBRIC.assignment_id, [PAGE], deps)
     assert run.status == S.PENDING_TEACHER_REVIEW
-    assert run.steps[4].status == "fallback" and any("JUDGE_NOT_RUN" in f for f in run.flags)
+    assert run.steps[STEP_ORDER.index("judge")].status == "fallback" and any("JUDGE_NOT_RUN" in f for f in run.flags)
 
 
 def test_finalisation_only_through_teacher_decision(tmp_path):

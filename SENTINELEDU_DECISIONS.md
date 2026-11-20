@@ -82,7 +82,22 @@ When a decision changes during implementation, add an addendum. Do not rewrite h
 **Why:** Correct answers naturally resemble the model answer and each other. The margin rule separates "both correct" from "copied from each other". File hashing also prevents paying for OCR twice on resubmissions.
 **Alternatives:** MinHash/shingling (lexical only, misses paraphrase), external plagiarism APIs (out of scope).
 **Consequences:** O(n²) pairs per question is fine for class sizes up to a few hundred.
-**Addendum (Phase 7):** _record the calibrated thresholds and precision/recall here._
+**Addendum (Phase 7, 2026-11-21):**
+- **Thresholds kept:** `NEAR_DUP_THRESHOLD=0.92`, `SIMILAR_THRESHOLD=0.85`, `INTEGRITY_MARGIN=0.10`, `INTEGRITY_MIN_TOKENS=15`. They are in `.env.example`.
+- **Synthetic calibration** (`tests/fixtures/integrity/calibration.json`: 10 students, 90 pairs, 4 planted, 2 textbook-copy controls):
+  - recall 4/4, precision 1.00, controls not flagged;
+  - smallest planted margin 0.167, largest margin of any innocent pair 0.031;
+  - every one of the 80 grid settings passed, so this set validates the rule but cannot choose between thresholds. Re-run `scripts/calibrate_integrity.py` on planted pairs in the gold set.
+- **"Reference" in the margin rule** means the larger of three things:
+  - SBERT cosine to the model answer;
+  - SBERT cosine to the top-k retrieved reference chunks;
+  - **lexical containment**: the best sliding-window `difflib` match of the answer inside a retrieved chunk joined with its neighbours.
+
+  Without containment, two students who both copied two sentences of the notes were flagged: cosine to a whole 500-character chunk underrates a partial copy, and the copied passage straddled a chunk boundary. With it, textbook copies score 0.97–1.00 against the reference, while student-to-student paraphrases score 0.35–0.53.
+- **Text normalisation** re-implements the regex of the legacy `clean_text_basic` (then lower-cases), because importing `src.nlp_processing` loads NLTK and the spellchecker.
+- **No redundant flags:**
+  - pairs already flagged `EXACT_DUPLICATE` or `TEXT_DUPLICATE` are not also given per-question near-duplicate flags;
+  - Judge-written flags that repeat a context flag are dropped.
 
 ## D-12 SQLite (stdlib `sqlite3`) and local files for storage — *Accepted*
 **Decision:** One `storage/sentinel.db` with JSON columns, plus upload and index directories. No ORM.
@@ -200,6 +215,24 @@ The decision row and the status change are written in one transaction. `workflow
 **Decision (Phase 7 hooks):** `integrity_precheck` and `integrity_postcheck` exist now. The duplicate checks themselves are Phase 7 (tasks 7.1 and 7.4), so the post-check is logged as `skipped`.
 
 **Decision (audit log):** table `audit_log` holds one row per step per run: `run_id`, `step`, `status` (ok, skipped, stopped, fallback or error), `model_id`, `prompt_version`, `duration_ms`, `detail` and `error`.
+
+## D-27 Phase 7 wiring — *Accepted*
+**Decision (step order):** `integrity_postcheck` now runs **after evaluation and before the Judge**. The order is: precheck, document, gate, evaluation, integrity_postcheck, judge, mark_pending_review.
+
+Task 7.4 requires the Judge to see integrity flags as context. Running the scan after Agent 2 also guarantees Agent 2 never sees the flags.
+
+**Decision (flags never change marks):**
+- Integrity flags reach the Judge prompt in their own section. That section says the flags are for the teacher only and must not change any verdict, level or feedback.
+- The flags are copied into `JudgeReport.flags`, so the teacher sees one list.
+- The Judge validator still applies only evidenced ±1 proposals, so a flag cannot move marks by itself.
+
+Two checks confirm this: an integration test where the same submission gets identical marks with and without a paraphrased copy in the class, and a live re-upload that scored the same 7/7.
+
+**Decision (storage):**
+- `integrity_flags` stores one row per side of a pair, so both students' review screens show the flag.
+- `replace_integrity_flags(submission_id, codes, flags)` deletes earlier rows with those codes on either side before inserting. Re-running a scan never duplicates rows, and a pair that is no longer similar after a teacher correction loses its flag on both sides.
+
+**Decision (exact duplicates):** `integrity_precheck` flags byte-identical uploads in the same assignment. If the new submission has no extraction, it copies the oldest duplicate's latest extraction, with an issue note saying so, so Gemini is not called again.
 
 ## D-23 Explicitly rejected for this project
 | Option | Reason |

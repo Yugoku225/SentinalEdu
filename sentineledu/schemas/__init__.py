@@ -13,6 +13,7 @@ from sentineledu.schemas.extraction import (
     ExtractedAnswer,
     ExtractedSubmission,
 )
+from sentineledu.schemas.integrity import IntegrityFlag
 from sentineledu.schemas.judge import (
     CriterionVerdict,
     Flag,
@@ -34,6 +35,7 @@ __all__ = [
     "CriterionEvaluation", "QuestionEvaluation", "EvaluationResult",
     "Flag", "CriterionVerdict", "QuestionFeedback", "JudgeReport",
     "VerdictDraft", "QuestionJudgeDraft", "FlagDraft", "JudgeDraft",
+    "IntegrityFlag",
     "MarkOverride", "TeacherDecision",
     "Submission", "SubmissionStatus",
 ]

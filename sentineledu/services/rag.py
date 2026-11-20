@@ -231,6 +231,17 @@ class RagStore:
     def sources(self, assignment_id: str) -> list[str]:
         return list(self._load(assignment_id)[2]["sources"])
 
+    def neighbourhood(self, assignment_id: str, chunk_id: str, radius: int = 1) -> str:
+        """The chunk's text joined with its neighbours from the same document (a passage cut by a chunk
+        boundary is whole again)."""
+        chunks = self.chunks(assignment_id)
+        i = next((n for n, c in enumerate(chunks) if c.chunk_id == chunk_id), None)
+        if i is None:
+            return ""
+        doc = chunk_id.split(".")[0]
+        near = [c for c in chunks[max(i - radius, 0): i + radius + 1] if c.chunk_id.split(".")[0] == doc]
+        return " ".join(c.text for c in near)
+
     def retrieve(self, assignment_id: str, query: str, k: int | None = None) -> list[RetrievedChunk]:
         """Top-k chunks by cosine similarity, best first. Empty query or index -> []."""
         k = k or self.settings.rag_top_k

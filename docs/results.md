@@ -126,3 +126,36 @@ Live runs through the CLI. Model `gemini-3.5-flash`. Reference notes indexed: 8 
 Each run wrote one `audit_log` row per step it executed (3 rows for the run that stopped at the gate, 7 for full runs), with model, prompt version and duration.
 Offline: 292 tests pass with the network blocked, including the full workflow with fake agents (happy path, gate stop, correction + resume with
 Agent 1 called exactly once, re-run keeps history, Agent 2 error, Agent 3 outage fallback, contained unexpected exception, finalisation guards).
+
+## Phase 7 — Integrity (2026-11-21)
+
+### Calibration (`scripts/calibrate_integrity.py`, synthetic class)
+`tests/fixtures/integrity/calibration.json` is a synthetic class: 10 students, 2 questions with long answers. It gives 90 pairs: 4 planted copies (two paraphrased analogies, one near-verbatim copy with spelling changes, one reordered anecdote) and 2 control pairs where both students copied the textbook notes. Raw output: `docs/phase7_calibration.json`.
+
+| Setting | NEAR_DUP | SIMILAR | MARGIN | Planted found | False positives | Precision | Controls flagged |
+|---|---|---|---|---|---|---|---|
+| current defaults | 0.92 | 0.85 | 0.10 | 4/4 | 0 | 1.00 | none |
+
+| Pair | Kind | Similarity | Margin over the reference |
+|---|---|---|---|
+| Q1 s01–s02 | planted paraphrase | 0.942 | 0.167 |
+| Q1 s07–s08 | planted near-verbatim | 0.947 | 0.280 |
+| Q3 s03–s04 | planted paraphrase | 0.915 | 0.225 |
+| Q3 s09–s10 | planted reordered anecdote | 0.959 | 0.364 |
+| Q1 s05–s06 | both copied the textbook | 0.993 | 0.031 |
+| Q3 s05–s06 | both copied the textbook | 0.997 | −0.003 |
+| Q1 s03–s05 (highest other) | independent correct answers | 0.925 | −0.037 |
+
+All 80 grid settings found every planted pair with no control flagged, so this set validates the rule but does not pin the thresholds down. The margin rule does the work: two correct answers can be 0.93 similar, but each is closer still to the reference.
+
+Bug found while building the tests: two students who copied the same two sentences of the notes were flagged. Similarity to a whole 500-character chunk underrated the partial copy (margin 0.33), and sentence windows only reduced it to 0.107. Adding lexical containment against the chunk and its neighbours fixed it (D-11 addendum).
+
+### Live check (2026-11-21)
+The clean synthetic page was uploaded again as a different student through `cli assess`.
+- Both submissions were flagged `EXACT_DUPLICATE`, and Agent 1 was skipped (the extraction was reused).
+- The Judge saw the flag as context, and the marks were unchanged at 7/7.
+- Total time was 17.0 s, against 52.6 s for the first upload.
+- The Judge echoed the flag back as its own, giving a duplicate in the report. Fixed: repeated flags are now dropped.
+
+### Gold set
+_Pending task 1.6: plant 3–4 copied pairs among the real pages and re-run the calibration._
