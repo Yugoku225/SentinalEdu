@@ -12,7 +12,7 @@ Resume semantics (TASKS 6.3): every stage is idempotent with respect to stored s
 """
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Callable
 
 from sentineledu.agents.document_agent import DocumentExtractionError, extract_submission
 from sentineledu.agents.evaluation_agent import EvaluationError, QuestionContext, build_context, evaluate
@@ -77,6 +77,8 @@ class WorkflowDeps:
     use_cache: bool = True
     judge_fallback: bool = True  # Gemini down for the Judge -> checks-only report instead of stopping
     enhance_images: bool = False
+    # Called after every step as progress(submission_id, step, status, duration_ms, message); the UI uses it.
+    progress: Callable[[str, str, str, int, str], None] | None = None
 
     def __post_init__(self):
         if self.rag is None:

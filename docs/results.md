@@ -159,3 +159,20 @@ The clean synthetic page was uploaded again as a different student through `cli 
 
 ### Gold set
 _Pending task 1.6: plant 3–4 copied pairs among the real pages and re-run the calibration._
+
+## Phase 8 — Dashboard (2026-11-21)
+
+`streamlit run streamlit_app.py`
+
+| Check | Result |
+|---|---|
+| AppTest page tests, offline (`tests/integration/test_dashboard.py`) | 11 passed |
+| The legacy app as a page | same title, both uploaders and the sidebar score input as `streamlit run app.py`; no `set_page_config` conflict |
+| A rubric built in the quick form | equal to `from_simple_model_answer` output, read back through `Storage.get_rubric` |
+| Approve & Finalise | disabled until the reviewer is named; disabled again when a mark changes without a reason; finalises with the override recorded |
+| Exported CSV | matches `teacher_decisions` row for row, per question and per criterion |
+| Refresh | a new session with `?assignment=…&submission=…` reopens the same submission |
+| Live run with Gemini (`tests/integration/test_dashboard_live.py`) | Submit → Teacher Review → Approve → Export in 117 s; 7/7, with highlighted evidence |
+| Server start | `/_stcore/health` returns `ok` |
+
+Still manual: a person walking through MASTER_PLAN §9 steps 1–8 in a browser, including a refresh mid-review.

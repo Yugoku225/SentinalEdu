@@ -544,3 +544,5 @@ STORAGE_DIR=storage
 | 7. Legacy Evaluator | Runs the original `app.py` unchanged (via `st.Page("app.py")`) |
 
 `streamlit run app.py` keeps working on its own.
+
+**Implemented (Phase 8).** Run `streamlit run streamlit_app.py`. The pages live in `sentineledu/ui/pages/`, and the selection is kept in the URL (`?assignment=…&submission=…`). Details are in D-28. The legacy page embeds without the D-13 fallback.

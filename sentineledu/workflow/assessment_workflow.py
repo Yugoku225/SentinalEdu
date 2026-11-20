@@ -58,6 +58,14 @@ class AssessmentRun(BaseModel):
 def _executor(steps: AssessmentSteps, name: str, run_id: str):
     method = steps.by_name(name)
     storage = steps.storage
+    progress = steps.deps.progress
+
+    def report(submission_id: str, status: str, ms: int, message: str) -> None:
+        if progress is not None:
+            try:
+                progress(submission_id, name, status, ms, message)
+            except Exception:  # noqa: BLE001 - a UI callback must never break the workflow
+                log.exception("progress callback failed")
 
     def run(step_input: StepInput) -> StepOutput:
         submission_id = str(step_input.input)
@@ -71,11 +79,13 @@ def _executor(steps: AssessmentSteps, name: str, run_id: str):
                 log.exception("[%s] unexpected error in %s", submission_id, name)
             message = str(e) if expected else f"{type(e).__name__}: {e}"
             storage.log_step(submission_id, name, "error", run_id=run_id, duration_ms=ms, error=message)
+            report(submission_id, "error", ms, message)
             return StepOutput(content=message, success=False, error=message, stop=True)
         ms = int((time.monotonic() - start) * 1000)
         storage.log_step(submission_id, name, result.status, run_id=run_id, model_id=result.model_id,
                          prompt_version=result.prompt_version, duration_ms=ms, detail=result.detail)
         log.info("[%s] %-22s %-8s %6d ms  %s", submission_id, name, result.status, ms, result.detail)
+        report(submission_id, result.status, ms, result.detail)
         return StepOutput(content=result.detail, stop=result.stop)
 
     run.__name__ = name

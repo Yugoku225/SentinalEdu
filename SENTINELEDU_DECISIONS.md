@@ -110,6 +110,7 @@ When a decision changes during implementation, add an addendum. Do not rewrite h
 **Why:** It upgrades the existing Streamlit interface without editing `app.py`. `streamlit run app.py` still works on its own.
 **Risk and fallback:** If `st.set_page_config` in `app.py` conflicts with the navigation entry point in the installed Streamlit version, add a thin wrapper page `sentineledu/ui/pages/legacy.py` that reimplements the same UI by calling the unchanged `src.pipeline_runner.run_full_assessment`. `app.py` itself still stays untouched.
 **Alternatives:** Next.js (prohibited), the `pages/` directory convention (auto-discovery is less controllable and would make `app.py` the landing page).
+**Addendum (Phase 8, verified 2026-11-21):** with Streamlit 1.50, `st.Page("app.py")` under `st.navigation` runs the unchanged legacy app. Its own `st.set_page_config` call does not conflict, and the title, both uploaders and the sidebar score input all render. The fallback wrapper page was not needed.
 
 ## D-14 TrOCR kept as an offline fallback only, no retraining — *Accepted*
 **Decision:** `services/ocr_fallback.py` wraps `src.ocr_pipeline.extract_handwritten_text()` and is imported lazily. It is used when Gemini fails or when `OFFLINE_MODE=true`, for images only. Fallback output always goes through teacher extraction review, because TrOCR cannot segment by question.
@@ -233,6 +234,35 @@ Two checks confirm this: an integration test where the same submission gets iden
 - `replace_integrity_flags(submission_id, codes, flags)` deletes earlier rows with those codes on either side before inserting. Re-running a scan never duplicates rows, and a pair that is no longer similar after a teacher correction loses its flag on both sides.
 
 **Decision (exact duplicates):** `integrity_precheck` flags byte-identical uploads in the same assignment. If the new submission has no extraction, it copies the oldest duplicate's latest extraction, with an issue note saying so, so Gemini is not called again.
+
+## D-28 Dashboard implementation details — *Accepted*
+**Shape:**
+- `streamlit_app.py` registers six pages from `sentineledu/ui/pages/` plus `app.py`.
+- `ui/state.py` provides the shared dependency access and selection helpers.
+- `ui/components.py` provides badges, quote highlighting and a live progress runner.
+- Pages call only services and workflow actions. No grading logic lives in the UI.
+
+**Refresh-safe selection (8.8):**
+- The selected assignment and submission are mirrored into the URL query string. A refresh or a shared link reopens the same item.
+- `st.session_state` carries the selection across `st.switch_page`, which cannot pass query parameters in 1.50.
+- All data is re-read from SQLite on every run.
+- Dropdown options are ids (strings) with a label function, not model objects. That is robust across reruns and works with AppTest.
+
+**Progress:** `WorkflowDeps.progress` is an optional callback, called after every step. The Submit, Extraction Review and Teacher Review pages show it in `st.status`. An exception in the callback is logged and never breaks the workflow.
+
+**Rubric quick form:** each question gets one full/partial/none criterion through `from_simple_model_answer`. Rubrics with several criteria per question are imported as JSON, and validation errors are shown verbatim.
+
+**Teacher review:**
+- The final-marks form starts from the Judge's recommendation.
+- A reason box unlocks when a mark changes. **Approve & Finalise** stays disabled until the reviewer name is entered and every changed mark has a reason.
+- `approve()` then builds the overrides, and `Storage.finalize()` re-checks every rule server-side.
+- Evidence quotes are highlighted in the HTML-escaped answer text.
+
+**Integrity heatmap:** drawn with Altair, which ships with Streamlit, so no new dependency. Flagged pairs get a red outline.
+
+**Reference uploads** are kept under `storage/references/<assignment_id>/`, which is git-ignored with the rest of `storage/`.
+
+**Testing:** `streamlit.testing.v1.AppTest` with `state.DEPS_FACTORY` pointing at fake agents and a temporary database. AppTest cannot drive `st.file_uploader`, so uploads are created through storage, and the Submit page is tested through its "Run again" path, which runs the same workflow code.
 
 ## D-23 Explicitly rejected for this project
 | Option | Reason |

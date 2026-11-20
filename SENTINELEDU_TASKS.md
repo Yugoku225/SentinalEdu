@@ -158,24 +158,34 @@ Mark a task `[x]` only after its AC has been verified. A phase is complete when 
 
 ## Phase 8 — Dashboard (≈ 4 days)
 
-- [ ] **8.1 Multipage shell**: `streamlit_app.py` with `st.navigation` and the pages in ARCHITECTURE §10. The "Legacy Evaluator" page runs the unchanged `app.py`.
+- [x] **8.1 Multipage shell**: `streamlit_app.py` with `st.navigation` and the pages in ARCHITECTURE §10. The "Legacy Evaluator" page runs the unchanged `app.py`.
   Deps: 6.2 · AC: `streamlit run streamlit_app.py` shows all pages. The legacy page produces the same output as `streamlit run app.py`. If `st.set_page_config` inside `app.py` conflicts, use the fallback in DECISIONS D-13.
-- [ ] **8.2 Assignments & Rubrics page**: create an assignment, build a rubric with a form or JSON upload (validated), upload reference docs (ingest → show chunk count).
+- [x] **8.2 Assignments & Rubrics page**: create an assignment, build a rubric with a form or JSON upload (validated), upload reference docs (ingest → show chunk count).
   Deps: 4.2, 4.3, 8.1 · AC: a rubric created in the UI loads identically through the service.
-- [ ] **8.3 Submit page**: upload, run the workflow with `st.status` progress per step, show the resulting status, and link to the next page.
+- [x] **8.3 Submit page**: upload, run the workflow with `st.status` progress per step, show the resulting status, and link to the next page.
   Deps: 6.2, 8.1 · AC: a gold page runs end-to-end from the UI.
-- [ ] **8.4 Extraction Review page**: image viewer next to editable per-question text areas with legibility badges. Save the correction and resume.
+- [x] **8.4 Extraction Review page**: image viewer next to editable per-question text areas with legibility badges. Save the correction and resume.
   Deps: 3.7, 6.3, 8.1 · AC: correcting a flagged extraction and resuming reaches `PENDING_TEACHER_REVIEW`.
-- [ ] **8.5 Teacher Review page**: a criterion table with level, marks, evidence quotes (highlighted in the answer text), reference chunk popovers, Judge verdicts, flags, and recommended vs. evaluator marks. An editable final-marks form where a reason is required for each change. An **Approve & Finalise** button.
+- [x] **8.5 Teacher Review page**: a criterion table with level, marks, evidence quotes (highlighted in the answer text), reference chunk popovers, Judge verdicts, flags, and recommended vs. evaluator marks. An editable final-marks form where a reason is required for each change. An **Approve & Finalise** button.
   Deps: 5.4, 6.4, 8.1 · AC: Approve is disabled until the reviewer name is filled in and every override has a reason. The status becomes `FINALIZED`.
-- [ ] **8.6 Integrity page**: cohort similarity heatmap per question and a side-by-side view of flagged pairs.
+- [x] **8.6 Integrity page**: cohort similarity heatmap per question and a side-by-side view of flagged pairs.
   Deps: 7.4, 8.1 · AC: planted pairs are visible.
-- [ ] **8.7 Results & Export page**: table of finalised submissions. CSV/JSON download including feedback.
+- [x] **8.7 Results & Export page**: table of finalised submissions. CSV/JSON download including feedback.
   Deps: 8.5 · AC: the exported CSV matches the DB.
-- [ ] **8.8 State robustness**: every page reads state from SQLite by `submission_id`. Browser refresh does not lose work.
+- [x] **8.8 State robustness**: every page reads state from SQLite by `submission_id`. Browser refresh does not lose work.
   Deps: 8.2–8.7 · AC: manual test of refresh mid-review.
 
 **Phase 8 Exit Gate (M7):** a teacher completes the full demo flow (MASTER_PLAN §9, steps 1–8) in the UI.
+> **Status 2026-11-21:**
+> - Every page is built.
+> - 13 AppTest tests drive each page (11 page-flow tests, plus 2 extra results-page checks). Planted pairs show on the Integrity page.
+> - A live run with real Gemini went Submit → Teacher Review → Approve → Export.
+> - The server starts and serves the app (health check ok).
+>
+> **Still open:**
+> - A person must walk through demo steps 1–8 in a browser.
+> - That walkthrough includes refreshing mid-review (8.8). The automated test covers the URL part of that.
+> - The real demo needs handwritten pages and a reference PDF (task 1.6).
 
 ---
 

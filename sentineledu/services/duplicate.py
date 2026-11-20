@@ -223,3 +223,28 @@ def integrity_scan(storage: Storage, submission_id: str, *, settings: Settings |
     flags = text_flags + near_duplicate_check(sub, extraction, rubric, near_cohort, settings, rag)
     storage.replace_integrity_flags(submission_id, SCAN_CODES, flags)
     return [f for f in flags if f.submission_id == submission_id]
+
+
+def similarity_matrix(storage: Storage, assignment_id: str, question_id: str, *,
+                      settings: Settings | None = None) -> tuple[list[Submission], np.ndarray, list[str]]:
+    """Pairwise SBERT cosine between the latest answers to one question across the assignment (for the
+    dashboard heatmap). Blank/unreadable answers give NaN rows. Returns (submissions, matrix, answer texts)."""
+    settings = settings or get_settings()
+    subs, texts = [], []
+    for sub in storage.list_submissions(assignment_id):
+        ext = storage.latest_extraction(sub.submission_id)
+        if ext is None:
+            continue
+        a = ext.answer_for(question_id)
+        subs.append(sub)
+        texts.append(a.answer_text if is_attempted(a) else "")
+    n = len(subs)
+    matrix = np.full((n, n), np.nan)
+    live = [i for i, t in enumerate(texts) if t.strip()]
+    if live:
+        vecs = embeddings.encode([clean_text(texts[i]) for i in live], settings)
+        sims = np.clip(vecs @ vecs.T, -1.0, 1.0)
+        for a, i in enumerate(live):
+            for b, j in enumerate(live):
+                matrix[i, j] = sims[a, b]
+    return subs, matrix, texts
