@@ -191,22 +191,35 @@ Mark a task `[x]` only after its AC has been verified. A phase is complete when 
 
 ## Phase 9 — Testing, Docs & Demo (≈ 4 days)
 
-- [ ] **9.1 Unit test sweep**: coverage ≥ 70% on `sentineledu/services` and `sentineledu/schemas`.
+- [x] **9.1 Unit test sweep**: coverage ≥ 70% on `sentineledu/services` and `sentineledu/schemas`.
   Deps: all · AC: `pytest --cov` report.
-- [ ] **9.2 Integration tests**: workflow with fakes covering happy path, gate stop, resume, duplicate, Gemini failure → TrOCR fallback.
+- [x] **9.2 Integration tests**: workflow with fakes covering happy path, gate stop, resume, duplicate, Gemini failure → TrOCR fallback.
   Deps: 6.x, 7.x · AC: all pass offline.
 - [ ] **9.3 E2E live test**: `pytest -m live tests/e2e/` runs 3 gold submissions through the CLI and asserts structure, status and bounds (not exact marks).
   Deps: 6.5 · AC: passes with a valid key.
 - [ ] **9.4 Accuracy report**: `docs/results.md` covers OCR CER/WER (Gemini vs TrOCR), segmentation accuracy, mark MAE/agreement (SentinelEdu vs legacy vs teacher), Judge seeded-error detection, integrity precision/recall, and latency and API calls per submission.
   Deps: 3.8, 4.8, 5.5, 7.3 · AC: every table is filled in with real numbers.
-- [ ] **9.5 Documentation**: `README.md` (setup, `.env`, run legacy/new, architecture summary, limitations, privacy note) and `docs/user_guide.md` for teachers.
+- [x] **9.5 Documentation**: `README.md` (setup, `.env`, run legacy/new, architecture summary, limitations, privacy note) and `docs/user_guide.md` for teachers.
   Deps: 8.x · AC: a fresh clone and the README steps give a working app.
-- [ ] **9.6 Demo package**: `scripts/seed_demo.py` (assignment, rubric, reference doc, 5 submissions including a duplicate and an illegible one), a demo script (talk track), and an optional screen recording.
+- [x] **9.6 Demo package**: `scripts/seed_demo.py` (assignment, rubric, reference doc, 5 submissions including a duplicate and an illegible one), a demo script (talk track), and an optional screen recording.
   Deps: 9.5 · AC: the seed and demo run in under 10 minutes from a clean DB.
-- [ ] **9.7 Final regression**: the legacy app's output still matches `tests/fixtures/legacy_baseline.json`.
+- [x] **9.7 Final regression**: the legacy app's output still matches `tests/fixtures/legacy_baseline.json`.
   Deps: 1.5 · AC: test passes.
 
 **Phase 9 Exit Gate (M8):** all tests pass, the report is complete, and the demo is reproducible.
+> **Status 2026-11-21: partly met.**
+>
+> | Item | Status |
+> |---|---|
+> | 9.1 coverage | 92% overall; every services and schemas module at 84% or more |
+> | 9.2 integration | 326 offline tests pass, including Gemini failing over to TrOCR through the whole workflow |
+> | 9.5 docs | README, user guide and demo script written. A fresh copy of the committed files passes the offline suite with no key, model or network, and the dashboard starts |
+> | 9.6 demo | the seed reaches every expected state in 286 s from a clean database |
+> | 9.7 legacy | 3 legacy tests pass |
+>
+> **Still open:**
+> - **9.3** is written but has not passed yet. The first runs found three problems, all fixed: a fixture scope error in the test, and two kinds of output leaking into the CLI's JSON (Agno's logs and the legacy TrOCR code's prints). It then hit the daily free-tier quota. Re-run `pytest -m live tests/e2e/` when the quota resets.
+> - **9.4** has every table filled with synthetic numbers. The gold-set column needs task 1.6.
 
 ---
 

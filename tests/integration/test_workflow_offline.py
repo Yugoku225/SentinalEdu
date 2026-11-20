@@ -120,3 +120,66 @@ def test_cli_status_and_rubric_import(tmp_path, monkeypatch, capsys):
     assert cli_main(["rubric-import", str(PROJECT_ROOT / "data" / "rubrics" / "sample_rubric.json")]) == 0
     assert json.loads(capsys.readouterr().out)["assignment_id"] == RUBRIC.assignment_id
     assert cli_main(["status", "nope"]) == 2
+
+
+def test_gemini_failure_falls_back_to_trocr_and_the_teacher_finishes(tmp_path, monkeypatch):
+    """TASKS 9.2: Gemini cannot read the page -> TrOCR fallback -> the gate always stops (TrOCR cannot split
+    by question) -> the teacher assigns the text to questions -> resume reaches review without Gemini OCR."""
+    trocr_calls = []
+
+    def fake_trocr(image_path, model_path):
+        trocr_calls.append(image_path)
+        return "Photosynthesis is how plants make food. Chlorophyll in chloroplasts.", 0.55
+    monkeypatch.setattr("sentineledu.services.ocr_fallback._legacy_extract", fake_trocr)
+    monkeypatch.setattr("sentineledu.services.ocr_fallback.model_available", lambda settings: True)
+    deps = make_deps(tmp_path, doc=[ProviderError("404 NOT_FOUND model retired")], ev=[eval_draft()], jd=[judge_draft()])
+    run = assess_files(RUBRIC.assignment_id, [PAGE], deps)
+    assert len(trocr_calls) == 1 and len(deps.document_agent.calls) == 1
+    assert run.status == S.NEEDS_EXTRACTION_REVIEW and run.stopped_at == "extraction_gate"
+    assert run.steps[1].status == "fallback" and "TrOCR" in run.reason
+    ext = deps.storage.get_extraction(run.submission_id)
+    assert ext.engine == "trocr" and "Photosynthesis" in ext.unmatched_text
+
+    from wf_helpers import A1, A2, A3
+    submit_correction(deps.storage, run.submission_id,
+                      [AnswerEdit(question_id=q, answer_text=t) for q, t in (("Q1", A1), ("Q2", A2), ("Q3", A3))],
+                      "Ms Rao", unmatched_text="")
+    resumed = run_assessment(run.submission_id, deps)
+    assert resumed.status == S.PENDING_TEACHER_REVIEW and resumed.evaluation_total == 7
+    assert len(deps.document_agent.calls) == 1 and len(trocr_calls) == 1
+
+
+def test_cli_keeps_stdout_pure_json():
+    """Regression (e2e run 2026-11-21): Agno's error logs went to stdout and broke the CLI's JSON output."""
+    import logging
+    import sys
+
+    import agno.utils.log as agno_log
+    from sentineledu.cli import logs_to_stderr
+    names = (agno_log.LOGGER_NAME, agno_log.TEAM_LOGGER_NAME, agno_log.WORKFLOW_LOGGER_NAME)
+    handlers = [h for n in names for h in logging.getLogger(n).handlers if isinstance(h, logging.StreamHandler)]
+    assert handlers
+    originals = [h.stream for h in handlers]
+    try:
+        for h in handlers:
+            h.setStream(sys.__stdout__)  # Agno's default
+        logs_to_stderr()
+        assert all(h.stream is sys.stderr for h in handlers)
+    finally:
+        for h, stream in zip(handlers, originals):
+            h.setStream(stream)
+
+
+def test_cli_stray_prints_go_to_stderr(monkeypatch, capsys):
+    """Regression (e2e run 2026-11-21): the legacy TrOCR code prints progress, which broke the CLI's JSON stdout."""
+    import sentineledu.cli as cli
+
+    def fake_main(argv):
+        print("Loading Fine-Tuned TrOCR model ...")  # what src/ocr_pipeline.py does
+        print('{"ok": true}', file=cli._OUT)
+        return 0
+    monkeypatch.setattr(cli, "_main", fake_main)
+    assert cli.main([]) == 0
+    out, err = capsys.readouterr()
+    assert json.loads(out) == {"ok": True}
+    assert "Loading Fine-Tuned TrOCR" in err

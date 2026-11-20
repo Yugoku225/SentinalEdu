@@ -14,7 +14,11 @@ import re
 from pathlib import Path
 from typing import Sequence
 
-import faiss
+# torch MUST be imported before faiss: on macOS, loading faiss first and then running torch
+# inference (the TrOCR fallback, the legacy evaluator) segfaults the process because the two
+# OpenMP runtimes collide. Verified 2026-11-21, see DECISIONS D-29.
+import torch  # noqa: F401,I001
+import faiss  # noqa: I001
 import numpy as np
 from pydantic import BaseModel, Field
 

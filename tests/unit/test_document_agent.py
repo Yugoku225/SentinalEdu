@@ -154,6 +154,7 @@ def _fake_trocr(monkeypatch, text="The quick brown dog", conf=0.7):
         calls.append(image_path)
         return text, conf
     monkeypatch.setattr("sentineledu.services.ocr_fallback._legacy_extract", fake)
+    monkeypatch.setattr("sentineledu.services.ocr_fallback.model_available", lambda settings: True)
     return calls
 
 

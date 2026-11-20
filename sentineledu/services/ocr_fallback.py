@@ -21,6 +21,11 @@ def _legacy_extract(image_path: str, model_path: str) -> tuple[str, float]:
     return extract_handwritten_text(image_path, model_path=model_path)
 
 
+def model_available(settings: Settings) -> bool:
+    """The fine-tuned TrOCR weights are not in the repository (1.2 GB); see README."""
+    return settings.trocr_model_path.exists()
+
+
 def extract_with_trocr(submission_id: str, paths: Sequence[Path], *,
                        expected_question_ids: Sequence[str] = (),
                        settings: Settings | None = None) -> ExtractedSubmission:
@@ -30,8 +35,9 @@ def extract_with_trocr(submission_id: str, paths: Sequence[Path], *,
     if pdfs:
         raise FallbackUnavailableError(
             f"TrOCR fallback only handles images; cannot read PDF page(s) {pdfs}. Retry when Gemini is available.")
-    if not settings.trocr_model_path.exists():
-        raise FallbackUnavailableError(f"TrOCR model not found at {settings.trocr_model_path}")
+    if not model_available(settings):
+        raise FallbackUnavailableError(f"TrOCR model not found at {settings.trocr_model_path} "
+                                       "(it is not in the repository; see README).")
 
     texts, confidences = [], []
     for page, path in enumerate(paths, start=1):

@@ -264,6 +264,24 @@ Two checks confirm this: an integration test where the same submission gets iden
 
 **Testing:** `streamlit.testing.v1.AppTest` with `state.DEPS_FACTORY` pointing at fake agents and a temporary database. AppTest cannot drive `st.file_uploader`, so uploads are created through storage, and the Submit page is tested through its "Run again" path, which runs the same workflow code.
 
+## D-29 Phase 9 findings (verified 2026-11-21) — *Accepted*
+**Decision (import torch before faiss):** `services/rag.py` imports `torch` immediately before `faiss`.
+
+On macOS (arm64, faiss-cpu 1.15.1, torch 2.8.0), loading faiss first and then running torch inference segfaults the whole process; the reverse order works. Limiting faiss to one thread (`faiss.omp_set_num_threads(1)`) did not help.
+
+This would have crashed the dashboard, CLI or legacy page whenever the TrOCR fallback or the legacy evaluator ran after RAG had been used. It was found by the final legacy regression run: pytest now imports every test module at collection, including `test_rag`, which loads faiss. Regression test: `test_trocr_runs_after_faiss_is_loaded`, which runs in a subprocess and is marked `legacy`.
+
+**Decision (TrOCR model not in the repository):**
+- `my_trocr_model/` (1.2 GB) stays git-ignored. The README explains it.
+- `ocr_fallback.model_available()` is the single check, and the offline test fakes replace it, so the default suite passes on a fresh clone without the model.
+- A fresh-clone check (the committable files only, no `.env`, no model, no storage) passed: 324 offline tests with the network blocked, and the dashboard started.
+
+**Decision (CLI stdout is JSON only):** the first live end-to-end run showed two things writing to stdout besides the result. Agno's loggers write there, and the legacy TrOCR code prints its progress with `print()` (it must stay unchanged). `cli.main` now moves Agno's handlers to stderr and runs the whole command under `redirect_stdout(sys.stderr)`. Only the final JSON goes to the real stdout. Regression tests: `test_cli_keeps_stdout_pure_json` and `test_cli_stray_prints_go_to_stderr`.
+
+**Decision (coverage):** added `pytest-cov==7.1.0` as a dev dependency. Overall coverage is 92%; every `services/` and `schemas/` module is at 86% or more.
+
+**Decision (demo assets):** the two demo pages (a planted near-duplicate pair) and a two-page reference PDF are committed under `data/demo/` (400 KB). They are rendered once, so the demo needs no macOS fonts. `scripts/seed_demo.py --reset` removes the database, uploads, indexes and references, but keeps `storage/cache/`, so re-seeding costs no Gemini quota.
+
 ## D-23 Explicitly rejected for this project
 | Option | Reason |
 |---|---|

@@ -2,6 +2,57 @@
 
 Numbers from the evaluation scripts, recorded per phase. Raw output is in the JSON files next to this one.
 
+## Accuracy report (TASKS 9.4) — summary as of 2026-11-21
+
+> **Read this first.** Every number below comes from **synthetic** pages (rendered from handwriting fonts)
+> or **synthetic** calibration data, with marks assigned by the developer from the rubric, not by a
+> teacher. They show the pipeline works as designed. They do **not** measure real handwriting accuracy
+> or agreement with a teacher. Those columns stay "pending" until the gold set exists (task 1.6).
+> Each command is listed so the table can be re-run on the gold set.
+
+| Metric | SentinelEdu | Comparison | Data | Gold set |
+|---|---|---|---|---|
+| OCR character error rate (CER) | 0.000 (gemini-3.5-flash) | TrOCR 0.558 | 4 synthetic submissions, 5 pages | pending |
+| OCR word error rate (WER) | 0.000 | TrOCR 0.993 | same | pending |
+| Answers matched to the right question | 100% (12/12) | TrOCR cannot match answers to questions | same | pending |
+| Blank answer detected / illegible answer flagged | 1/1, 1/1 | – | same | pending |
+| Mark error, per question / per total | 0.00 / 0.00 | legacy grader 0.56 / 1.07 | 4 synthetic submissions; **developer's placeholder marks** | pending |
+| Exact rubric-level agreement / Cohen's κ | 100% (20 criteria) / 1.00 | legacy: no levels | same | pending |
+| Awarded marks backed by a verified quote | 17/17; 0 rubric-consistency problems | legacy: no evidence | same | pending |
+| Judge: planted grading errors caught | 4/5, 0 false alarms on 4 correct evaluations | – | 5 planted errors in synthetic evaluations | (benchmark is synthetic by design) |
+| Judge: recommendations within rubric bounds | 9/9 runs; 300-draft property test | – | synthetic | – |
+| Integrity: copied pairs found / precision | 4/4 / 1.00; 2 textbook-copy controls not flagged | – | synthetic class: 10 students, 90 pairs | pending (plant 3–4 pairs) |
+
+Commands:
+- `scripts/eval_ocr.py`: OCR and question matching.
+- `scripts/eval_grading.py --legacy`: marks against the teacher, and against the legacy grader.
+- `scripts/eval_judge.py`: the Judge's planted-error benchmark.
+- `scripts/calibrate_integrity.py`: duplicate detection.
+
+### Latency and API calls per submission (live, `gemini-3.5-flash`)
+
+| Path | Gemini requests | Reading the pages | Grading | Second review | End to end |
+|---|---|---|---|---|---|
+| Normal submission | 3 (one per agent) | 9.6–51.7 s | 10.6–38.5 s | 7.4–16.0 s | 33–117 s |
+| Stopped for a transcription check, then corrected | 1, then 2 after the correction | 31.7 s | 10.6 s | cached | 31.8 s + 10.6 s |
+| Byte-identical re-upload | 2 (no reading step) | skipped | 9.6 s | 7.4 s | 17.0–50.8 s |
+| Demo seed (6 submissions, from a clean database) | about 14 | – | – | – | 286 s in total |
+
+Typical tokens per request:
+
+| Agent | Input | Output |
+|---|---|---|
+| Document Understanding | about 2,000 | about 350 |
+| Answer Evaluation | about 3,600 | about 600–800 |
+| Judge & Feedback | about 3,000–3,800 | about 350–800 |
+
+Timings vary a lot with Gemini load. 503 "high demand" errors are retried with backoff, then sent to the fallback model. The free tier allows 20 requests per day per model, which is about 6 submissions.
+
+### Legacy regression
+`pytest -m legacy`: 3 passed. The original evaluator still reproduces `tests/fixtures/legacy_baseline.json` exactly, the real TrOCR fallback reads the sample page, and TrOCR runs after FAISS has been loaded (crash fix D-29).
+
+---
+
 ## Phase 3 — Document Understanding (2026-11-16)
 
 ### Synthetic pages (`tests/fixtures/synthetic/`)

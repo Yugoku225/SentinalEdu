@@ -9,6 +9,7 @@
 The summary JSON goes to stdout; per-step timings go to stderr.
 """
 import argparse
+import contextlib
 import json
 import logging
 import sys
@@ -20,6 +21,16 @@ from sentineledu.services.rubric import RubricError, load_rubric
 from sentineledu.services.storage import NotFoundError, Storage
 from sentineledu.workflow.assessment_workflow import AssessmentRun, assess_files, run_assessment
 from sentineledu.workflow.steps import WorkflowDeps
+
+
+def logs_to_stderr() -> None:
+    """Agno's loggers write to stdout; move them to stderr so stdout stays pure JSON (found in the e2e run)."""
+    import agno.utils.log as agno_log
+
+    for name in (agno_log.LOGGER_NAME, agno_log.TEAM_LOGGER_NAME, agno_log.WORKFLOW_LOGGER_NAME):
+        for handler in logging.getLogger(name).handlers:
+            if isinstance(handler, logging.StreamHandler) and getattr(handler, "stream", None) in (sys.stdout, sys.__stdout__):
+                handler.setStream(sys.stderr)
 
 
 def _import_rubric(storage: Storage, path: Path, assignment_id: str | None) -> str:
@@ -47,7 +58,7 @@ def _print_timings(run: AssessmentRun) -> None:
         print(f"Stopped at {run.stopped_at}: {run.reason}", file=sys.stderr)
 
 
-def main(argv: list[str] | None = None) -> int:
+def _main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="sentineledu", description="SentinelEdu assessment workflow")
     sub = ap.add_subparsers(dest="command", required=True)
 
@@ -71,6 +82,7 @@ def main(argv: list[str] | None = None) -> int:
 
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args(argv)
+    logs_to_stderr()
     logging.basicConfig(level=logging.INFO if args.verbose else logging.WARNING,
                         format="%(levelname)s %(name)s: %(message)s", stream=sys.stderr)
 
@@ -78,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
     storage = Storage(settings)
     try:
         if args.command == "rubric-import":
-            print(json.dumps({"assignment_id": _import_rubric(storage, args.path, None)}))
+            print(json.dumps({"assignment_id": _import_rubric(storage, args.path, None)}), file=_OUT)
             return 0
 
         if args.command == "status":
@@ -89,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
             dec = storage.get_decision(s.submission_id)
             out |= {"evaluation_total": ev.total if ev else None, "recommended_total": rep.recommended_total if rep else None,
                     "final_total": dec.total if dec else None}
-            print(json.dumps(out, indent=2, default=str))
+            print(json.dumps(out, indent=2, default=str), file=_OUT)
             return 0
 
         deps = WorkflowDeps(storage=storage, settings=settings, rag=RagStore(settings), use_cache=not args.no_cache)
@@ -110,8 +122,20 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     _print_timings(run)
-    print(run.model_dump_json(indent=2))
+    print(run.model_dump_json(indent=2), file=_OUT)
     return 0 if run.stopped_at is None or run.status.value == "NEEDS_EXTRACTION_REVIEW" else 1
+
+
+_OUT = sys.stdout
+
+
+def main(argv: list[str] | None = None) -> int:
+    """stdout carries only the JSON result. Anything else printed while working (the legacy TrOCR code
+    prints progress with print()) is sent to stderr. Found in the e2e run, 2026-11-21."""
+    global _OUT
+    _OUT = sys.stdout
+    with contextlib.redirect_stdout(sys.stderr):
+        return _main(argv)
 
 
 if __name__ == "__main__":
