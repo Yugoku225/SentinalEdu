@@ -1,0 +1,139 @@
+{
+  "description": "SYNTHETIC font-rendered pages for pipeline testing. Not a substitute for the real gold set (SENTINELEDU_TASKS.md 1.6). Regenerate with scripts/make_synthetic_pages.py.",
+  "synthetic": true,
+  "rubric": "data/rubrics/sample_rubric.json",
+  "marks_by": "DEVELOPER PLACEHOLDER, not a teacher: marks applied by reading data/rubrics/sample_rubric.json against the transcriptions. Replace with a teacher's marks on the gold set (task 1.6).",
+  "questions": [
+    {
+      "question_id": "Q1",
+      "prompt": "Define photosynthesis."
+    },
+    {
+      "question_id": "Q2",
+      "prompt": "Name the green pigment in leaves and say where it is found."
+    },
+    {
+      "question_id": "Q3",
+      "prompt": "Why do plants need water?"
+    }
+  ],
+  "items": [
+    {
+      "id": "syn_01_clean",
+      "files": [
+        "syn_01_clean_p1.jpg"
+      ],
+      "transcription": {
+        "Q1": "Photosynthesis is the process by which green plants make their own food using sunlight, carbon dioxide and water. Oxygen is released as a by-product.",
+        "Q2": "The green pigment is chlorophyll. It is found in the chloroplasts of leaf cells.",
+        "Q3": "Plants need water for photosynthesis and to carry minerals from the roots to the leaves."
+      },
+      "expect": {
+        "blank": [],
+        "illegible": []
+      },
+      "teacher_marks": {
+        "Q1": {
+          "C1": 2,
+          "C2": 1
+        },
+        "Q2": {
+          "C1": 1,
+          "C2": 1
+        },
+        "Q3": {
+          "C1": 2
+        }
+      }
+    },
+    {
+      "id": "syn_02_messy_illegible",
+      "files": [
+        "syn_02_messy_illegible_p1.jpg"
+      ],
+      "transcription": {
+        "Q1": "Photosynthesys is how plants make food from sunlite and carbon dioxide.",
+        "Q2": "The pigment is chlorophyl and it is present inside the chloroplast.",
+        "Q3": "Water keeps the plant cells firm and is used in photosynthesys."
+      },
+      "expect": {
+        "blank": [],
+        "illegible": [
+          "Q2"
+        ]
+      },
+      "teacher_marks": {
+        "Q1": {
+          "C1": 1,
+          "C2": 0
+        },
+        "Q2": {
+          "C1": 1,
+          "C2": 1
+        },
+        "Q3": {
+          "C1": 2
+        }
+      }
+    },
+    {
+      "id": "syn_03_blank_out_of_order",
+      "files": [
+        "syn_03_blank_out_of_order_p1.jpg"
+      ],
+      "transcription": {
+        "Q1": "Plants use light energy to turn carbon dioxide and water into glucose.",
+        "Q2": "Chlorophyll, which is found in chloroplasts.",
+        "Q3": ""
+      },
+      "expect": {
+        "blank": [
+          "Q3"
+        ],
+        "illegible": []
+      },
+      "teacher_marks": {
+        "Q1": {
+          "C1": 2,
+          "C2": 0
+        },
+        "Q2": {
+          "C1": 1,
+          "C2": 1
+        },
+        "Q3": {
+          "C1": 0
+        }
+      }
+    },
+    {
+      "id": "syn_04_two_pages",
+      "files": [
+        "syn_04_two_pages_p1.jpg",
+        "syn_04_two_pages_p2.jpg"
+      ],
+      "transcription": {
+        "Q1": "Photosynthesis happens in the leaves. Light energy is absorbed by chlorophyll and used to split water molecules. Carbon dioxide from the air is then combined with hydrogen to make glucose, and oxygen is given out.",
+        "Q2": "Chlorophyll, in the chloroplasts.",
+        "Q3": "To make food and to transport nutrients."
+      },
+      "expect": {
+        "blank": [],
+        "illegible": []
+      },
+      "teacher_marks": {
+        "Q1": {
+          "C1": 2,
+          "C2": 1
+        },
+        "Q2": {
+          "C1": 1,
+          "C2": 1
+        },
+        "Q3": {
+          "C1": 2
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,252 @@
+[
+  {
+    "summary": {
+      "engine": "gemini",
+      "model": "gemini-3.7-flash",
+      "items": 4,
+      "cer": 0.0,
+      "wer": 0.0,
+      "segmentation_acc": 1.0,
+      "blank_detected": "1/1",
+      "illegible_flagged": "1/1",
+      "sent_to_review": "1/4",
+      "avg_seconds": 13.38057563570328,
+      "synthetic": true
+    },
+    "rows": [
+      {
+        "item": "syn_01_clean",
+        "engine": "gemini",
+        "model": "gemini-3.7-flash",
+        "seconds": 20.4,
+        "per_question": {
+          "Q1": "CER 0.000",
+          "Q2": "CER 0.000",
+          "Q3": "CER 0.000"
+        },
+        "gate_ok": true,
+        "gate_reasons": [],
+        "issues": []
+      },
+      {
+        "item": "syn_02_messy_illegible",
+        "engine": "gemini",
+        "model": "gemini-3.5-flash",
+        "seconds": 13.6,
+        "per_question": {
+          "Q1": "CER 0.000",
+          "Q2": "illegible FLAGGED (unreadable)",
+          "Q3": "CER 0.000"
+        },
+        "gate_ok": false,
+        "gate_reasons": [
+          "Q2: answer is unreadable."
+        ],
+        "issues": [
+          "Answer 2 is blurred and completely unreadable.",
+          "Read by fallback model gemini-3.5-flash."
+        ]
+      },
+      {
+        "item": "syn_03_blank_out_of_order",
+        "engine": "gemini",
+        "model": "gemini-3.5-flash",
+        "seconds": 6.7,
+        "per_question": {
+          "Q1": "CER 0.000",
+          "Q2": "CER 0.000",
+          "Q3": "blank OK"
+        },
+        "gate_ok": true,
+        "gate_reasons": [],
+        "issues": [
+          "Read by fallback model gemini-3.5-flash."
+        ]
+      },
+      {
+        "item": "syn_04_two_pages",
+        "engine": "gemini",
+        "model": "gemini-3.5-flash",
+        "seconds": 12.8,
+        "per_question": {
+          "Q1": "CER 0.000",
+          "Q2": "CER 0.000",
+          "Q3": "CER 0.000"
+        },
+        "gate_ok": true,
+        "gate_reasons": [],
+        "issues": [
+          "Read by fallback model gemini-3.5-flash."
+        ]
+      }
+    ]
+  },
+  {
+    "summary": {
+      "engine": "gemini",
+      "model": "gemini-3.5-flash",
+      "items": 4,
+      "cer": 0.0,
+      "wer": 0.0,
+      "segmentation_acc": 1.0,
+      "blank_detected": "1/1",
+      "illegible_flagged": "1/1",
+      "sent_to_review": "1/4",
+      "avg_seconds": 5.88455572957173,
+      "synthetic": true
+    },
+    "rows": [
+      {
+        "item": "syn_01_clean",
+        "engine": "gemini",
+        "model": "gemini-3.5-flash",
+        "seconds": 14.3,
+        "per_question": {
+          "Q1": "CER 0.000",
+          "Q2": "CER 0.000",
+          "Q3": "CER 0.000"
+        },
+        "gate_ok": true,
+        "gate_reasons": [],
+        "issues": []
+      },
+      {
+        "item": "syn_02_messy_illegible",
+        "engine": "gemini",
+        "model": "gemini-3.5-flash",
+        "seconds": 3.2,
+        "per_question": {
+          "Q1": "CER 0.000",
+          "Q2": "illegible FLAGGED (unreadable)",
+          "Q3": "CER 0.000"
+        },
+        "gate_ok": false,
+        "gate_reasons": [
+          "Q2: answer is unreadable."
+        ],
+        "issues": [
+          "Answer 2 is heavily blurred and completely unreadable."
+        ]
+      },
+      {
+        "item": "syn_03_blank_out_of_order",
+        "engine": "gemini",
+        "model": "gemini-3.5-flash",
+        "seconds": 2.8,
+        "per_question": {
+          "Q1": "CER 0.000",
+          "Q2": "CER 0.000",
+          "Q3": "blank OK"
+        },
+        "gate_ok": true,
+        "gate_reasons": [],
+        "issues": [
+          "The student answered Q2 before Q1, and Q3 is left blank."
+        ]
+      },
+      {
+        "item": "syn_04_two_pages",
+        "engine": "gemini",
+        "model": "gemini-3.5-flash",
+        "seconds": 3.3,
+        "per_question": {
+          "Q1": "CER 0.000",
+          "Q2": "CER 0.000",
+          "Q3": "CER 0.000"
+        },
+        "gate_ok": true,
+        "gate_reasons": [],
+        "issues": []
+      }
+    ]
+  },
+  {
+    "summary": {
+      "engine": "trocr",
+      "model": null,
+      "items": 4,
+      "cer": 0.5577596266044341,
+      "wer": 0.9928057553956835,
+      "segmentation_acc": null,
+      "blank_detected": "0/0",
+      "illegible_flagged": "0/0",
+      "sent_to_review": "4/4",
+      "avg_seconds": 27.124052291736007,
+      "synthetic": true
+    },
+    "rows": [
+      {
+        "item": "syn_01_clean",
+        "engine": "trocr",
+        "model": null,
+        "seconds": 42.1,
+        "per_question": {},
+        "gate_ok": false,
+        "gate_reasons": [
+          "Read by the offline TrOCR fallback: answers must be assigned to questions.",
+          "Question(s) not found on the pages: Q1, Q2, Q3.",
+          "Some writing could not be matched to a question."
+        ],
+        "issues": [
+          "OFFLINE_MODE is on, so Gemini was not used.",
+          "Read by the offline TrOCR fallback, which cannot split answers by question: assign the text to questions in the review screen.",
+          "Average TrOCR line confidence: 0.64."
+        ]
+      },
+      {
+        "item": "syn_02_messy_illegible",
+        "engine": "trocr",
+        "model": null,
+        "seconds": 21.5,
+        "per_question": {},
+        "gate_ok": false,
+        "gate_reasons": [
+          "Read by the offline TrOCR fallback: answers must be assigned to questions.",
+          "Question(s) not found on the pages: Q1, Q2, Q3.",
+          "Some writing could not be matched to a question."
+        ],
+        "issues": [
+          "OFFLINE_MODE is on, so Gemini was not used.",
+          "Read by the offline TrOCR fallback, which cannot split answers by question: assign the text to questions in the review screen.",
+          "Average TrOCR line confidence: 0.51."
+        ]
+      },
+      {
+        "item": "syn_03_blank_out_of_order",
+        "engine": "trocr",
+        "model": null,
+        "seconds": 16.2,
+        "per_question": {},
+        "gate_ok": false,
+        "gate_reasons": [
+          "Read by the offline TrOCR fallback: answers must be assigned to questions.",
+          "Question(s) not found on the pages: Q1, Q2, Q3.",
+          "Some writing could not be matched to a question."
+        ],
+        "issues": [
+          "OFFLINE_MODE is on, so Gemini was not used.",
+          "Read by the offline TrOCR fallback, which cannot split answers by question: assign the text to questions in the review screen.",
+          "Average TrOCR line confidence: 0.51."
+        ]
+      },
+      {
+        "item": "syn_04_two_pages",
+        "engine": "trocr",
+        "model": null,
+        "seconds": 28.7,
+        "per_question": {},
+        "gate_ok": false,
+        "gate_reasons": [
+          "Read by the offline TrOCR fallback: answers must be assigned to questions.",
+          "Question(s) not found on the pages: Q1, Q2, Q3.",
+          "Some writing could not be matched to a question."
+        ],
+        "issues": [
+          "OFFLINE_MODE is on, so Gemini was not used.",
+          "Read by the offline TrOCR fallback, which cannot split answers by question: assign the text to questions in the review screen.",
+          "Average TrOCR line confidence: 0.64."
+        ]
+      }
+    ]
+  }
+]

@@ -1,12 +1,27 @@
-opencv-python==4.9.0.80
-pytesseract
-transformers
-sentence-transformers
-numpy<2
-scikit-learn
-Pillow
-requests
-nltk
-pyspellchecker
-streamlit
-PyPDF2
+# Python 3.11 (see SENTINELEDU_DECISIONS.md D-16)
+# Versions match the environment the legacy evaluator was verified on
+# (tests/fixtures/legacy_baseline.json).
+
+# --- Legacy evaluator ---
+torch==2.8.0
+torchvision==0.23.0
+transformers==4.57.6
+sentence-transformers==5.1.2
+numpy==2.0.2
+opencv-python==4.13.0.92
+pillow==11.3.0
+nltk==3.9.2          # also needs NLTK data: punkt, punkt_tab, stopwords
+pyspellchecker==0.8.4
+streamlit==1.50.0
+PyPDF2==3.0.1
+
+# --- SentinelEdu (Phase 2) ---
+agno==3.2.0
+google-genai==3.3.0
+pydantic==2.14.3
+pydantic-settings==2.16.3
+python-dotenv==1.2.4
+faiss-cpu==1.15.1
+
+# --- Development ---
+pytest==9.2.0

@@ -1,0 +1,189 @@
+{
+  "summary": {
+    "manifest": "tests/fixtures/synthetic/manifest.json",
+    "synthetic": true,
+    "marks_by": "DEVELOPER PLACEHOLDER, not a teacher: marks applied by reading data/rubrics/sample_rubric.json against the transcriptions. Replace with a teacher's marks on the gold set (task 1.6).",
+    "items": 4,
+    "graded_from": "transcription",
+    "model": "gemini-3.5-flash",
+    "reference_docs": [
+      "photosynthesis_notes.txt"
+    ],
+    "sentinel": {
+      "mae_question": 0.0,
+      "mae_total": 0.0,
+      "level_agreement": 1.0,
+      "levels_compared": 20,
+      "kappa": 1.0
+    },
+    "legacy": {
+      "mae_question": 0.5583333333333333,
+      "mae_total": 1.075
+    },
+    "exit_gate": {
+      "awarded_criteria": 17,
+      "awarded_with_verified_evidence": 17,
+      "rubric_consistency_problems": []
+    },
+    "avg_seconds": 6.7
+  },
+  "rows": [
+    {
+      "item": "syn_01_clean",
+      "seconds": 0.6,
+      "model": "gemini-3.5-flash",
+      "sentinel_total": 7.0,
+      "max_total": 7.0,
+      "teacher_total": 7.0,
+      "legacy_total": 6.5,
+      "questions": {
+        "Q1": {
+          "sentinel": 3.0,
+          "levels": {
+            "C1": "full",
+            "C2": "full"
+          },
+          "teacher": 3.0,
+          "legacy": 3.0
+        },
+        "Q2": {
+          "sentinel": 2.0,
+          "levels": {
+            "C1": "full",
+            "C2": "full"
+          },
+          "teacher": 2.0,
+          "legacy": 2.0
+        },
+        "Q3": {
+          "sentinel": 2.0,
+          "levels": {
+            "C1": "full"
+          },
+          "teacher": 2.0,
+          "legacy": 1.5
+        }
+      },
+      "flags": []
+    },
+    {
+      "item": "syn_02_messy_illegible",
+      "seconds": 0.3,
+      "model": "gemini-3.5-flash",
+      "sentinel_total": 5.0,
+      "max_total": 7.0,
+      "teacher_total": 5.0,
+      "legacy_total": 5.2,
+      "questions": {
+        "Q1": {
+          "sentinel": 1.0,
+          "levels": {
+            "C1": "partial",
+            "C2": "none"
+          },
+          "teacher": 1.0,
+          "legacy": 2.2
+        },
+        "Q2": {
+          "sentinel": 2.0,
+          "levels": {
+            "C1": "full",
+            "C2": "full"
+          },
+          "teacher": 2.0,
+          "legacy": 1.5
+        },
+        "Q3": {
+          "sentinel": 2.0,
+          "levels": {
+            "C1": "full"
+          },
+          "teacher": 2.0,
+          "legacy": 1.5
+        }
+      },
+      "flags": [
+        "Q1:NO_EVIDENCE_AT_ZERO:C2"
+      ]
+    },
+    {
+      "item": "syn_03_blank_out_of_order",
+      "seconds": 0.2,
+      "model": "gemini-3.5-flash",
+      "sentinel_total": 4.0,
+      "max_total": 7.0,
+      "teacher_total": 4.0,
+      "legacy_total": 3.7,
+      "questions": {
+        "Q1": {
+          "sentinel": 2.0,
+          "levels": {
+            "C1": "full",
+            "C2": "none"
+          },
+          "teacher": 2.0,
+          "legacy": 2.2
+        },
+        "Q2": {
+          "sentinel": 2.0,
+          "levels": {
+            "C1": "full",
+            "C2": "full"
+          },
+          "teacher": 2.0,
+          "legacy": 1.5
+        },
+        "Q3": {
+          "sentinel": 0.0,
+          "levels": {
+            "C1": "none"
+          },
+          "teacher": 0,
+          "legacy": 0.0
+        }
+      },
+      "flags": [
+        "Q1:NO_EVIDENCE_AT_ZERO:C2",
+        "Q3:NOT_ATTEMPTED"
+      ]
+    },
+    {
+      "item": "syn_04_two_pages",
+      "seconds": 25.7,
+      "model": "gemini-3.5-flash",
+      "sentinel_total": 7.0,
+      "max_total": 7.0,
+      "teacher_total": 7.0,
+      "legacy_total": 3.7,
+      "questions": {
+        "Q1": {
+          "sentinel": 3.0,
+          "levels": {
+            "C1": "full",
+            "C2": "full"
+          },
+          "teacher": 3.0,
+          "legacy": 2.2
+        },
+        "Q2": {
+          "sentinel": 2.0,
+          "levels": {
+            "C1": "full",
+            "C2": "full"
+          },
+          "teacher": 2.0,
+          "legacy": 1.5
+        },
+        "Q3": {
+          "sentinel": 2.0,
+          "levels": {
+            "C1": "full"
+          },
+          "teacher": 2.0,
+          "legacy": 0.0
+        }
+      },
+      "flags": []
+    }
+  ]
+}

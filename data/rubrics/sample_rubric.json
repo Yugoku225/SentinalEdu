@@ -1,0 +1,95 @@
+{
+  "assignment_id": "photosynthesis_basics",
+  "title": "Photosynthesis basics (matches the gold / synthetic test set)",
+  "version": 1,
+  "questions": [
+    {
+      "question_id": "Q1",
+      "prompt": "Define photosynthesis.",
+      "max_marks": 3,
+      "model_answer": "Photosynthesis is the process by which green plants make their own food (glucose) from carbon dioxide and water, using light energy absorbed by chlorophyll. Oxygen is released as a by-product.",
+      "criteria": [
+        {
+          "criterion_id": "C1",
+          "description": "Definition: plants make food (glucose) from carbon dioxide and water using light energy",
+          "max_marks": 2,
+          "key_concepts": ["light energy / sunlight", "carbon dioxide", "water", "food / glucose", "green plants / chlorophyll"],
+          "levels": [
+            {"level_id": "full", "label": "Complete", "marks": 2,
+             "descriptor": "States that plants make food/glucose AND names light/sunlight, carbon dioxide and water as what is used."},
+            {"level_id": "partial", "label": "Partly complete", "marks": 1,
+             "descriptor": "States that plants make food using light, but one or more of carbon dioxide, water or the product is missing or wrong."},
+            {"level_id": "none", "label": "Not shown", "marks": 0,
+             "descriptor": "Blank, off-topic, or does not describe plants making food."}
+          ]
+        },
+        {
+          "criterion_id": "C2",
+          "description": "Names oxygen as the by-product that is released",
+          "max_marks": 1,
+          "key_concepts": ["oxygen released"],
+          "levels": [
+            {"level_id": "full", "label": "Stated", "marks": 1,
+             "descriptor": "Says oxygen is released, given out or produced."},
+            {"level_id": "none", "label": "Not stated", "marks": 0,
+             "descriptor": "Oxygen is not mentioned, or a wrong gas is named as the product."}
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "Q2",
+      "prompt": "Name the green pigment in leaves and say where it is found.",
+      "max_marks": 2,
+      "model_answer": "The green pigment is chlorophyll. It is found in the chloroplasts of leaf cells.",
+      "criteria": [
+        {
+          "criterion_id": "C1",
+          "description": "Names the pigment: chlorophyll",
+          "max_marks": 1,
+          "key_concepts": ["chlorophyll"],
+          "levels": [
+            {"level_id": "full", "label": "Named", "marks": 1,
+             "descriptor": "Names chlorophyll (a misspelling that is clearly chlorophyll counts)."},
+            {"level_id": "none", "label": "Not named", "marks": 0,
+             "descriptor": "Chlorophyll is not named or a different substance is named."}
+          ]
+        },
+        {
+          "criterion_id": "C2",
+          "description": "Location: in the chloroplasts (of leaf cells)",
+          "max_marks": 1,
+          "key_concepts": ["chloroplast"],
+          "levels": [
+            {"level_id": "full", "label": "Located", "marks": 1,
+             "descriptor": "Says it is found in chloroplasts (a misspelling that is clearly chloroplast counts)."},
+            {"level_id": "none", "label": "Not located", "marks": 0,
+             "descriptor": "No location, or a wrong location such as the roots or the nucleus."}
+          ]
+        }
+      ]
+    },
+    {
+      "question_id": "Q3",
+      "prompt": "Why do plants need water?",
+      "max_marks": 2,
+      "model_answer": "Water is a raw material for photosynthesis. It also carries dissolved minerals from the roots to the leaves and keeps the cells firm (turgid) so the plant stays upright.",
+      "criteria": [
+        {
+          "criterion_id": "C1",
+          "description": "Gives valid reasons: raw material for photosynthesis, transport of minerals/nutrients, keeping cells firm, cooling",
+          "max_marks": 2,
+          "key_concepts": ["photosynthesis / making food", "transport of minerals or nutrients", "cells firm / turgid / support", "cooling / transpiration"],
+          "levels": [
+            {"level_id": "full", "label": "Two reasons", "marks": 2,
+             "descriptor": "Gives two or more distinct valid reasons."},
+            {"level_id": "partial", "label": "One reason", "marks": 1,
+             "descriptor": "Gives exactly one valid reason."},
+            {"level_id": "none", "label": "No valid reason", "marks": 0,
+             "descriptor": "Blank, or no valid reason is given."}
+          ]
+        }
+      ]
+    }
+  ]
+}

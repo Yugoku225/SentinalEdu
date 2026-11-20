@@ -1,0 +1,117 @@
+{
+  "baseline": [
+    {
+      "sid": "syn_01_clean",
+      "seconds": 0.0,
+      "evaluator_total": 7.0,
+      "recommended_total": 7.0,
+      "disagreements": 0,
+      "accepted_changes": 0,
+      "bounds_problems": [],
+      "feedback_for_all": true
+    },
+    {
+      "sid": "syn_02_messy_illegible",
+      "seconds": 0.0,
+      "evaluator_total": 5.0,
+      "recommended_total": 5.0,
+      "disagreements": 0,
+      "accepted_changes": 0,
+      "bounds_problems": [],
+      "feedback_for_all": true
+    },
+    {
+      "sid": "syn_03_blank_out_of_order",
+      "seconds": 0.0,
+      "evaluator_total": 4.0,
+      "recommended_total": 4.0,
+      "disagreements": 0,
+      "accepted_changes": 0,
+      "bounds_problems": [],
+      "feedback_for_all": true
+    },
+    {
+      "sid": "syn_04_two_pages",
+      "seconds": 0.0,
+      "evaluator_total": 7.0,
+      "recommended_total": 7.0,
+      "disagreements": 0,
+      "accepted_changes": 0,
+      "bounds_problems": [],
+      "feedback_for_all": true
+    }
+  ],
+  "seeded": [
+    {
+      "kind": "level_up",
+      "sid": "syn_02_messy_illegible",
+      "qid": "Q1",
+      "cid": "C1",
+      "from_level": "partial",
+      "to_level": "full",
+      "detected": true,
+      "how": "judge corrected to 'partial'",
+      "seconds": 0.0,
+      "evaluator_total": 6.0,
+      "recommended_total": 5.0,
+      "bounds_problems": []
+    },
+    {
+      "kind": "level_down",
+      "sid": "syn_01_clean",
+      "qid": "Q1",
+      "cid": "C1",
+      "from_level": "full",
+      "to_level": "partial",
+      "detected": true,
+      "how": "judge corrected to 'full'",
+      "seconds": 0.0,
+      "evaluator_total": 6.0,
+      "recommended_total": 7.0,
+      "bounds_problems": []
+    },
+    {
+      "kind": "concept_missing",
+      "sid": "syn_03_blank_out_of_order",
+      "qid": "Q1",
+      "cid": "C1",
+      "from_level": "full",
+      "to_level": "full",
+      "detected": false,
+      "how": "judge agreed: The student correctly identifies that plants use light energy to convert carbon ",
+      "seconds": 0.0,
+      "evaluator_total": 4.0,
+      "recommended_total": 4.0,
+      "bounds_problems": []
+    },
+    {
+      "kind": "inflated",
+      "sid": "syn_04_two_pages",
+      "qid": "Q1",
+      "cid": "C1",
+      "from_level": "full",
+      "to_level": "full",
+      "detected": true,
+      "how": "deterministic check OUT_OF_BOUNDS",
+      "seconds": 0.0,
+      "evaluator_total": 8.0,
+      "recommended_total": 7.0,
+      "bounds_problems": []
+    },
+    {
+      "kind": "no_evidence",
+      "sid": "syn_01_clean",
+      "qid": "Q1",
+      "cid": "C2",
+      "from_level": "full",
+      "to_level": "full",
+      "detected": true,
+      "how": "deterministic check NO_EVIDENCE",
+      "seconds": 46.9,
+      "evaluator_total": 7.0,
+      "recommended_total": 7.0,
+      "bounds_problems": []
+    }
+  ],
+  "detection": "4/5"
+}
